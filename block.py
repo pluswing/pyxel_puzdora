@@ -1,4 +1,5 @@
 import pyxel
+import math
 
 
 class Block:
@@ -12,12 +13,9 @@ class Block:
         self.targetY = self.y
         self.animation = False
         self.animationFrame = 0
-        self.animationDuration = 20
+        self.animationDuration = 4
         self.mx = 0
         self.my = 0
-
-    def needAnimation(self):
-        return self.targetX != self.x or self.targetY != self.y
 
     def update(self):
         if self.animation:
@@ -28,17 +26,22 @@ class Block:
                 self.x = self.targetX
                 self.y = self.targetY
                 self.animation = False
-            return
 
-        if self.needAnimation():
-            self.animation = True
-            self.mx = (self.targetX - self.x) / self.animationDuration
-            self.my = (self.targetY - self.y) / self.animationDuration
-            self.animationFrame = 0
+    def isHit(self, mouseX, mouseY):
+        diffX = mouseX - self.x
+        diffY = mouseY - self.y
+        l = math.sqrt(diffX * diffX + diffY * diffY)
+        return l < self.r
 
     def draw(self):
+        if self.color is None:
+            return
         pyxel.circ(self.x, self.y, self.r, self.color)
 
     def moveTo(self, x, y):
         self.targetX = int(x)
         self.targetY = int(y)
+        self.animation = True
+        self.mx = (self.targetX - self.x) / self.animationDuration
+        self.my = (self.targetY - self.y) / self.animationDuration
+        self.animationFrame = 0
