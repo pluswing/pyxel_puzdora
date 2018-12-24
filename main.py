@@ -1,137 +1,58 @@
 import pyxel
 import math
-import random
 from block import Block
+from pos import Pos
+from board import Board
+
+SCREEN_WIDTH = 250
+BLOCK_MAX_Y = 5
+BLOCK_MAX_X = 6
 
 
-class Pos:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+class GameSceneBase:
+    def __init__(self, root, board):
+        self.root = root
+        self.board = board  # Board(BLOCK_MAX_X, BLOCK_MAX_Y)
 
-    def __eq__(self, other):
-        return self.__hash__() == other.__hash__()
-
-    def __hash__(self):
-        return hash(self.__repr__())
-
-    def __repr__(self):
-        return "[x:{}, y:{}]".format(self.x, self.y)
-
-
-class App:
-    SCREEN_WIDTH = 250
-    BLOCK_MAX_Y = 5
-    BLOCK_MAX_X = 6
-    COLOR_MAP = [None, 8, 9, 11, 2, 12, 14]
-
-    def __init__(self):
-        self.blockSize = int(self.SCREEN_WIDTH / self.BLOCK_MAX_X)
-        self.board = []
-        self.initBoard()
-        self.hasBlock = None
-        self.colors = []
-        self.chains = []
-        self.state = 0
-        self.eraseBlocks = []
-
-        pyxel.init(self.SCREEN_WIDTH, math.floor(
-            self.blockSize * self.BLOCK_MAX_Y))
-        pyxel.mouse(True)
-        pyxel.run(self.update, self.draw)
-
-    def initBoard(self):
-        for y in range(self.BLOCK_MAX_Y):
-            line = []
-            for x in range(self.BLOCK_MAX_X):
-                line.append(self.createBlock(x, y))
-            self.board.append(line)
-
-    def _createBlock(self, x, y, color):
-        r = self.blockSize / 2
-        size = self.blockSize
-        ox, oy = self.getBlockOriginPos(x, y)
-        return Block(ox, oy, r, color)
-
-    def createBlock(self, x, y):
-        return self._createBlock(x, y, self.randomColor())
-
-    def createBlockWithoutColor(self, x, y):
-        return self._createBlock(x, y, None)
-
-    def randomColor(self):
-        colorIndex = random.randint(1, len(self.COLOR_MAP) - 1)
-        return self.COLOR_MAP[colorIndex]
-
-    def initEraseBlocks(self):
-        self.eraseBlocks = []
-        for y in range(self.BLOCK_MAX_Y):
-            self.eraseBlocks.append([0 for x in range(self.BLOCK_MAX_X)])
+    def name(self):
+        return self.__class__.__name__
 
     def update(self):
-        print(self.state)
-
         # ブロックのアップデートは必ずやる
         for line in self.board:
             for b in line:
                 b.update()
 
-        if self.state == 1:
-            if self.doneAnimation():
-                self.state = 2
-            return
+    def draw(self):
+        pyxel.cls(0)
 
-        if self.state == 2:
-            # ブロックの削除処理
-            for chain in self.chains:
-                for pos in chain:
-                    self.board[pos.y][pos.x].color = None
-            self.state = 3
-            self.chains = []
-            return
+    def drawBoard(self):
+        for line in self.board:
+            for b in line:
+                b.draw()
 
-        if self.state == 3:
-            if self.doneAnimation():
-                self.state = 4
-            return
 
-        if self.state == 4:
-            # ブロックを詰める処理
-            self.dropDownBlocks()
-            self.state = 5
-            return
+class MoveBlockScene(GameSceneBase):
 
-        if self.state == 5:
-            if self.doneAnimation():
-                self.state = 6
-            return
+    def __init__(self, root, board):
+        super(MoveBlockScene, self).__init__(root, board)
+        self.blockSize = int(SCREEN_WIDTH / BLOCK_MAX_X)
+        self.hasBlock = None
 
-        if self.state == 6:
-            # ブロックを追加する処理
-            self.fillBlocks()
-            self.state = 7
-            return
-
-        if self.state == 7:
-            # 盤面の評価
-            self.evaluateBoard()
-            if len(self.chains):
-                self.state = 1
-            else:
-                self.state = 0
-            return
-
+    def update(self):
+        super(MoveBlockScene, self).update()
         # ブロック持つ判定
         for line in self.board:
             for b in line:
                 if self.hasBlock is None and pyxel.btn(pyxel.MOUSE_LEFT_BUTTON):
                     if b.isHit(pyxel.mouse_x, pyxel.mouse_y):
                         self.hasBlock = b
+
         # ブロックを離す判定
         if self.hasBlock and not pyxel.btn(pyxel.MOUSE_LEFT_BUTTON):
             self.hasBlock.moveTo(self.hasBlock.targetX, self.hasBlock.targetY)
             self.hasBlock = None
-            self.state = 7
+            self.root.changeScene(Evaluate(self.root, self.board))
 
         # ブロックの移動
         if self.hasBlock:
@@ -151,69 +72,28 @@ class App:
                             self.hasBlock.targetX = tx
                             self.hasBlock.targetY = ty
                             # board上の位置を入れ替える。
-                            x1, y1 = self.getBlockPos(self.hasBlock)
-                            x2, y2 = self.getBlockPos(b)
+                            x1, y1 = self.board.getBlockPos(self.hasBlock)
+                            x2, y2 = self.board.getBlockPos(b)
                             self.board[y1][x1] = b
                             self.board[y2][x2] = self.hasBlock
 
-    def doneAnimation(self):
+    def draw(self):
+        super(MoveBlockScene, self).draw()
         for line in self.board:
             for b in line:
-                if b.animation:
-                    return False
-        return True
+                if self.hasBlock != b:
+                    b.draw()
 
-    def fillBlocks(self):
-        maxDown = self.findMaxDown()
-        self.fill(maxDown)
+        if self.hasBlock:
+            self.hasBlock.draw()
 
-    def findMaxDown(self):
-        maxDown = 0
-        for x in range(self.BLOCK_MAX_X):
-            down = 0
-            for y in range(self.BLOCK_MAX_Y):
-                if self.board[y][x].color is None:
-                    down += 1
-                else:
-                    break
-            if maxDown < down:
-                maxDown = down
-        return maxDown
 
-    def fill(self, maxDown):
-        for y, line in enumerate(self.board):
-            for x, b in enumerate(line):
-                if b.color is None:
-                    y = b.y
-                    b.y -= maxDown * self.blockSize
-                    b.color = self.randomColor()
-                    b.moveTo(b.x, y)
+class Evaluate(GameSceneBase):
 
-    def dropDownBlocks(self):
-        for y in reversed(range(self.BLOCK_MAX_Y)):
-            for x in range(self.BLOCK_MAX_X):
-                if self.board[y][x].color is None:
-                    upper = self.getUpperBlock(x, y)
-                    if upper:
-                        ux, uy = self.getBlockPos(upper)
-                        self.board[uy][ux] = self.createBlockWithoutColor(
-                            ux, uy)
-                        self.board[y][x] = upper
-                        ox, oy = self.getBlockOriginPos(x, y)
-                        upper.moveTo(ox, oy)
-
-    def getUpperBlock(self, x, y):
-        for y in reversed(range(y)):
-            if self.board[y][x].color:
-                return self.board[y][x]
-        return None
-
-    def getBlockPos(self, block):
-        for y, line in enumerate(self.board):
-            for x, b in enumerate(line):
-                if block == b:
-                    return x, y
-        # FIXME
+    def __init__(self, root, board):
+        super(Evaluate, self).__init__(root, board)
+        self.colors = []
+        self.eraseBlocks = []
 
     def boardColors(self):
         colors = []
@@ -224,15 +104,20 @@ class App:
             colors.append(l)
         return colors
 
+    def initEraseBlocks(self):
+        self.eraseBlocks = []
+        for y in range(BLOCK_MAX_Y):
+            self.eraseBlocks.append([0 for x in range(BLOCK_MAX_X)])
+
     def evaluateBoard(self):
         self.initEraseBlocks()
         self.evaluateBoardDirectionalX()
         self.evaluateBoardDirectionalY()
-        self.chains = self.getChains()
+        return self.getChains()
 
     def evaluateBoardDirectionalX(self):
-        for y in range(self.BLOCK_MAX_Y):
-            for x in range(self.BLOCK_MAX_X - 2):
+        for y in range(BLOCK_MAX_Y):
+            for x in range(BLOCK_MAX_X - 2):
                 b = self.board
                 if b[y][x].color == b[y][x+1].color == b[y][x+2].color:
                     self.eraseBlocks[y][x] = b[y][x].color
@@ -240,8 +125,8 @@ class App:
                     self.eraseBlocks[y][x+2] = b[y][x].color
 
     def evaluateBoardDirectionalY(self):
-        for y in range(self.BLOCK_MAX_Y - 2):
-            for x in range(self.BLOCK_MAX_X):
+        for y in range(BLOCK_MAX_Y - 2):
+            for x in range(BLOCK_MAX_X):
                 b = self.board
                 if b[y][x].color == b[y+1][x].color == b[y+2][x].color:
                     self.eraseBlocks[y][x] = b[y][x].color
@@ -250,8 +135,8 @@ class App:
 
     def getChains(self):
         chains = []
-        for y in range(self.BLOCK_MAX_Y):
-            for x in range(self.BLOCK_MAX_X):
+        for y in range(BLOCK_MAX_Y):
+            for x in range(BLOCK_MAX_X):
                 posList = self.getChain(x, y, self.eraseBlocks[y][x], [])
                 if len(posList):
                     chains.append(posList)
@@ -266,39 +151,157 @@ class App:
 
         if x > 0:
             self.getChain(x-1, y, color, posList)
-        if x < self.BLOCK_MAX_X - 1:
+        if x < BLOCK_MAX_X - 1:
             self.getChain(x+1, y, color, posList)
         if y > 0:
             self.getChain(x, y-1, color, posList)
-        if y < self.BLOCK_MAX_Y - 1:
+        if y < BLOCK_MAX_Y - 1:
             self.getChain(x, y+1, color, posList)
 
         posList.append(Pos(x, y))
         return posList
 
-    def getBlockOriginPos(self, x, y):
-        size = self.blockSize
-        return x * size + size / 2, y * size + size / 2
+    def update(self):
+        super(Evaluate, self).update()
+        chains = self.evaluateBoard()
+        if len(chains):
+            self.root.changeScene(ChainBlocks(self.root, self.board, chains))
+        else:
+            self.root.changeScene(MoveBlockScene(self.root, self.board))
 
     def draw(self):
-        pyxel.cls(0)
+        super(Evaluate, self).draw()
+        self.drawBoard()
 
-        if pyxel.btn(pyxel.KEY_SPACE):
-            r = self.blockSize / 2
-            for y, line in enumerate(self.board):
-                for x, b in enumerate(line):
-                    # b.draw()
-                    ox, oy = self.getBlockOriginPos(x, y)
-                    pyxel.circ(ox, oy, r, b.color)
-            return
 
-        for line in self.board:
-            for b in line:
-                if self.hasBlock != b:
-                    b.draw()
+class ChainBlocks(GameSceneBase):
+    def __init__(self, root, board, chains):
+        super(ChainBlocks, self).__init__(root, board)
+        self.chains = chains
 
-        if self.hasBlock:
-            self.hasBlock.draw()
+    def update(self):
+        super(ChainBlocks, self).update()
+        for chain in self.chains:
+            for pos in chain:
+                self.board[pos.y][pos.x].color = None
+
+        self.root.changeScene(DropDown(self.root, self.board))
+
+    def draw(self):
+        super(ChainBlocks, self).draw()
+        self.drawBoard()
+
+
+class DropDown(GameSceneBase):
+    def __init__(self, root, block):
+        super(DropDown, self).__init__(root, block)
+
+    def dropDownBlocks(self):
+        for y in reversed(range(BLOCK_MAX_Y)):
+            for x in range(BLOCK_MAX_X):
+                if self.board[y][x].color is None:
+                    upper = self.getUpperBlock(x, y)
+                    if upper:
+                        ux, uy = self.board.getBlockPos(upper)
+                        self.board[uy][ux] = Block.createBlockWithoutColor(
+                            ux, uy)
+                        self.board[y][x] = upper
+                        ox, oy = Block.calcBlockPos(x, y)
+                        upper.moveTo(ox, oy)
+
+    def getUpperBlock(self, x, y):
+        for y in reversed(range(y)):
+            if self.board[y][x].color:
+                return self.board[y][x]
+        return None
+
+        # FIXME
+
+    def update(self):
+        super(DropDown, self).update()
+        self.dropDownBlocks()
+        self.root.changeScene(WaitAnimation(Fill(self.root, self.board)))
+
+    def draw(self):
+        super(DropDown, self).draw()
+        self.drawBoard()
+
+
+class WaitAnimation(GameSceneBase):
+    def __init__(self, nextScene):
+        super(WaitAnimation, self).__init__(nextScene.root, nextScene.board)
+        self.nextScene = nextScene
+
+    def update(self):
+        super(WaitAnimation, self).update()
+        if self.board.doneAnimation():
+            self.root.changeScene(self.nextScene)
+
+    def draw(self):
+        super(WaitAnimation, self).draw()
+        self.drawBoard()
+
+
+class Fill(GameSceneBase):
+    def __init__(self, root, block):
+        super(Fill, self).__init__(root, block)
+
+    def fillBlocks(self):
+        maxDown = self.findMaxDown()
+        self.fill(maxDown)
+
+    def findMaxDown(self):
+        maxDown = 0
+        for x in range(BLOCK_MAX_X):
+            down = 0
+            for y in range(BLOCK_MAX_Y):
+                if self.board[y][x].color is None:
+                    down += 1
+                else:
+                    break
+            if maxDown < down:
+                maxDown = down
+        return maxDown
+
+    def fill(self, maxDown):
+        for y, line in enumerate(self.board):
+            for x, b in enumerate(line):
+                if b.color is None:
+                    y = b.y
+                    b.y -= maxDown * Block.BLOCK_SIZE
+                    b.color = Block.randomColor()
+                    b.moveTo(b.x, y)
+
+    def update(self):
+        super(Fill, self).update()
+        self.fillBlocks()
+        self.root.changeScene(WaitAnimation(Evaluate(self.root, self.board)))
+
+    def draw(self):
+        super(Fill, self).draw()
+        self.drawBoard()
+
+
+class App:
+    def __init__(self):
+        # new Board
+        Block.BLOCK_SIZE = int(SCREEN_WIDTH / BLOCK_MAX_X)
+        board = Board(BLOCK_MAX_X, BLOCK_MAX_Y)
+        self.scene = MoveBlockScene(self, board)
+        pyxel.init(SCREEN_WIDTH, math.floor(
+            int(SCREEN_WIDTH / BLOCK_MAX_X) * BLOCK_MAX_Y))
+        pyxel.mouse(True)
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        print(self.scene.name())
+        self.scene.update()
+
+    def draw(self):
+        self.scene.draw()
+
+    def changeScene(self, newScene):
+        self.scene = newScene
 
 
 App()

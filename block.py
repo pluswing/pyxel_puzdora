@@ -1,8 +1,12 @@
 import pyxel
 import math
+import random
 
 
 class Block:
+    COLOR_MAP = [None, 8, 9, 11, 2, 12, 14]
+    BLOCK_SIZE = 0
+
     def __init__(self, x, y, r, color):
         self.x = int(x)
         self.y = int(y)
@@ -36,7 +40,7 @@ class Block:
     def draw(self):
         if self.color is None:
             return
-        pyxel.circ(self.x, self.y, self.r, self.color)
+        pyxel.circ(self.x, self.y, self.r, self.COLOR_MAP[self.color])
 
     def moveTo(self, x, y):
         self.targetX = int(x)
@@ -45,3 +49,27 @@ class Block:
         self.mx = (self.targetX - self.x) / self.animationDuration
         self.my = (self.targetY - self.y) / self.animationDuration
         self.animationFrame = 0
+
+    @classmethod
+    def _createBlock(self, x, y, color):
+        r = self.BLOCK_SIZE / 2
+        size = self.BLOCK_SIZE
+        ox, oy = self.calcBlockPos(x, y)
+        return Block(ox, oy, r, color)
+
+    @classmethod
+    def createBlock(self, x, y):
+        return self._createBlock(x, y, self.randomColor())
+
+    @classmethod
+    def createBlockWithoutColor(self, x, y):
+        return self._createBlock(x, y, None)
+
+    @classmethod
+    def randomColor(self):
+        return random.randint(1, len(self.COLOR_MAP) - 1)
+
+    @classmethod
+    def calcBlockPos(self, x, y):
+        size = self.BLOCK_SIZE
+        return x * size + size / 2, y * size + size / 2
