@@ -5,10 +5,15 @@ class Board:
 
     def __init__(self, width, height):
         self.board = []
-        for y in range(height):
+        self.width = width
+        self.height = height
+        self.init()
+
+    def init(self):
+        for y in range(self.height):
             line = []
-            for x in range(width):
-                line.append(Block.createBlock(x, y))
+            for x in range(self.width):
+                line.append(Block.create(x, y))
             self.board.append(line)
 
     def getBlockPos(self, block):

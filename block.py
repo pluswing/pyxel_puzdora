@@ -51,25 +51,25 @@ class Block:
         self.animationFrame = 0
 
     @classmethod
-    def _createBlock(self, x, y, color):
+    def _create(self, x, y, color):
         r = self.BLOCK_SIZE / 2
         size = self.BLOCK_SIZE
-        ox, oy = self.calcBlockPos(x, y)
+        ox, oy = self.calcPos(x, y)
         return Block(ox, oy, r, color)
 
     @classmethod
-    def createBlock(self, x, y):
-        return self._createBlock(x, y, self.randomColor())
+    def create(self, x, y):
+        return self._create(x, y, self.randomColor())
 
     @classmethod
-    def createBlockWithoutColor(self, x, y):
-        return self._createBlock(x, y, None)
+    def createWithoutColor(self, x, y):
+        return self._create(x, y, None)
 
     @classmethod
     def randomColor(self):
         return random.randint(1, len(self.COLOR_MAP) - 1)
 
     @classmethod
-    def calcBlockPos(self, x, y):
+    def calcPos(self, x, y):
         size = self.BLOCK_SIZE
         return x * size + size / 2, y * size + size / 2
