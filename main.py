@@ -30,7 +30,6 @@ class App:
         pyxel.run(self.update, self.draw)
 
     def update(self):
-        print(self.scene.name())
         self.scene.update()
 
     def draw(self):
@@ -47,7 +46,7 @@ class App:
         elif isinstance(scene, ChainScene):
             self.changeScene(WaitAnimation(DropDownScene(self, self.board)))
         elif isinstance(scene, DropDownScene):
-            self.changeScene(WaitAnimation(FillScene(self, self.board)))
+            self.changeScene(WaitAnimation(FillScene(self, self.board), 20))
         elif isinstance(scene, FillScene):
             self.changeScene(EvaluateScene(self, self.board))
 

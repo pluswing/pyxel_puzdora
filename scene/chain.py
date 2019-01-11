@@ -9,11 +9,14 @@ class ChainScene(GameSceneBase):
 
     def update(self):
         super(ChainScene, self).update()
-        for chain in self.chains:
-            for pos in chain:
-                self.board[pos.y][pos.x].color = None
-
-        self.root.nextScene(self)
+        if self.board.doneAnimation():
+            if len(self.chains):
+                chain = self.chains.pop(0)
+                for pos in chain:
+                    self.board[pos.y][pos.x].color = None
+                    self.board[pos.y][pos.x].fadeOut()
+            else:
+                self.root.nextScene(self)
 
     def draw(self):
         super(ChainScene, self).draw()

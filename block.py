@@ -12,7 +12,6 @@ class Block:
         self.y = int(y)
         self.r = r
         self.color = color
-
         self.targetX = self.x
         self.targetY = self.y
         self.animation = False
@@ -49,6 +48,14 @@ class Block:
         self.mx = (self.targetX - self.x) / self.animationDuration
         self.my = (self.targetY - self.y) / self.animationDuration
         self.animationFrame = 0
+        self.animationDuration = 4
+
+    def fadeOut(self):
+        self.animation = True
+        self.mx = 0
+        self.my = 0
+        self.animationFrame = 0
+        self.animationDuration = 20
 
     @classmethod
     def _create(self, x, y, color):
