@@ -5,7 +5,7 @@ from block import Block
 
 class DropDownScene(GameSceneBase):
     def __init__(self, root, block):
-        super(DropDownScene, self).__init__(root, block)
+        super().__init__(root, block)
 
     def dropDown(self):
         for y in reversed(range(self.board.height)):
@@ -29,10 +29,10 @@ class DropDownScene(GameSceneBase):
         # FIXME
 
     def update(self):
-        super(DropDownScene, self).update()
+        super().update()
         self.dropDown()
         self.root.nextScene(self)
 
     def draw(self):
-        super(DropDownScene, self).draw()
+        super().draw()
         self.drawBoard()

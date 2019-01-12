@@ -6,10 +6,13 @@ from pos import Pos
 class EvaluateScene(GameSceneBase):
 
     def __init__(self, root, board):
-        super(EvaluateScene, self).__init__(root, board)
+        super().__init__(root, board)
         self.colors = []
         self.eraseBlocks = []
         self.chains = []
+        self.wait = 20
+        self.waitCounter = 0
+        self.evalueted = False
 
     def boardColors(self):
         colors = []
@@ -78,10 +81,15 @@ class EvaluateScene(GameSceneBase):
         return posList
 
     def update(self):
-        super(EvaluateScene, self).update()
-        self.chains = self.evaluate()
-        self.root.nextScene(self)
+        super().update()
+        if not self.evalueted:
+            self.evalueted = True
+            self.chains = self.evaluate()
+
+        self.waitCounter += 1
+        if self.wait < self.waitCounter:
+            self.root.nextScene(self)
 
     def draw(self):
-        super(EvaluateScene, self).draw()
+        super().draw()
         self.drawBoard()

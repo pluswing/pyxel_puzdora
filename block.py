@@ -51,6 +51,7 @@ class Block:
         self.animationDuration = 4
 
     def fadeOut(self):
+        self.color = None
         self.animation = True
         self.mx = 0
         self.my = 0

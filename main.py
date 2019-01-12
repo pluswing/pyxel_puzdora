@@ -46,7 +46,7 @@ class App:
         elif isinstance(scene, ChainScene):
             self.changeScene(WaitAnimation(DropDownScene(self, self.board)))
         elif isinstance(scene, DropDownScene):
-            self.changeScene(WaitAnimation(FillScene(self, self.board), 20))
+            self.changeScene(FillScene(self, self.board))
         elif isinstance(scene, FillScene):
             self.changeScene(EvaluateScene(self, self.board))
 

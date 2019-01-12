@@ -5,7 +5,7 @@ from .base import GameSceneBase
 class MoveBlockScene(GameSceneBase):
 
     def __init__(self, root, board):
-        super(MoveBlockScene, self).__init__(root, board)
+        super().__init__(root, board)
         self.blockSize = int(pyxel.width / board.width)
         self.draggingBlock = None
 
@@ -13,7 +13,7 @@ class MoveBlockScene(GameSceneBase):
         return self.draggingBlock is not None
 
     def update(self):
-        super(MoveBlockScene, self).update()
+        super().update()
         # ブロック持つ判定
         for line in self.board:
             for b in line:
@@ -52,7 +52,7 @@ class MoveBlockScene(GameSceneBase):
                             self.board[y2][x2] = self.draggingBlock
 
     def draw(self):
-        super(MoveBlockScene, self).draw()
+        super().draw()
         for line in self.board:
             for b in line:
                 if self.draggingBlock != b:

@@ -5,7 +5,7 @@ from block import Block
 
 class FillScene(GameSceneBase):
     def __init__(self, root, block):
-        super(FillScene, self).__init__(root, block)
+        super().__init__(root, block)
 
     def fillBlocks(self):
         maxDown = self.findMaxDown()
@@ -34,10 +34,10 @@ class FillScene(GameSceneBase):
                     b.moveTo(b.x, y)
 
     def update(self):
-        super(FillScene, self).update()
+        super().update()
         self.fillBlocks()
         self.root.nextScene(self)
 
     def draw(self):
-        super(FillScene, self).draw()
+        super().draw()
         self.drawBoard()
