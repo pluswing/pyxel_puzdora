@@ -41,14 +41,24 @@ class Block:
             return
         pyxel.circ(self.x, self.y, self.r, self.COLOR_MAP[self.color])
 
-    def moveTo(self, x, y):
+    def moveToWithDuration(self, x, y, duration=4):
         self.targetX = int(x)
         self.targetY = int(y)
         self.animation = True
-        self.mx = (self.targetX - self.x) / self.animationDuration
-        self.my = (self.targetY - self.y) / self.animationDuration
+        self.mx = (self.targetX - self.x) / duration
+        self.my = (self.targetY - self.y) / duration
         self.animationFrame = 0
-        self.animationDuration = 4
+        self.animationDuration = duration
+
+    def moveTo(self, x, y):
+        diffX = self.x - x
+        diffY = self.y - y
+        l = math.sqrt(diffX * diffX + diffY * diffY)
+        duration = int(l / (self.r / 2))
+        if duration < 1:
+            duration = 1
+        print(l, self.r, duration)
+        self.moveToWithDuration(x, y, duration)
 
     def fadeOut(self):
         self.color = None
