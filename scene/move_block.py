@@ -38,18 +38,27 @@ class MoveBlockScene(GameSceneBase):
                 for b in line:
                     if b.isHit(pyxel.mouse_x, pyxel.mouse_y) and not b.animation:
                         if self.draggingBlock != b:
-                            # 見た目上の位置を入れ替える（アニメーション）
-                            tx = b.targetX
-                            ty = b.targetY
-                            b.moveTo(self.draggingBlock.targetX,
-                                     self.draggingBlock.targetY)
-                            self.draggingBlock.targetX = tx
-                            self.draggingBlock.targetY = ty
-                            # board上の位置を入れ替える。
-                            x1, y1 = self.board.getBlockPos(self.draggingBlock)
-                            x2, y2 = self.board.getBlockPos(b)
-                            self.board[y1][x1] = b
-                            self.board[y2][x2] = self.draggingBlock
+                            dx, dy = self.board.getBlockPos(self.draggingBlock)
+                            bx, by = self.board.getBlockPos(b)
+                            if dx != bx and dy != by:
+                                lr = self.board[dy][dx + (bx - dx)]
+                                self.swap(self.draggingBlock, lr)
+                            self.swap(self.draggingBlock, b)
+
+    def swap(self, b1, b2):
+        # 見た目上の位置を入れ替える（アニメーション）
+        tx = b2.targetX
+        ty = b2.targetY
+        b2.moveTo(b1.targetX,
+                  b1.targetY)
+        b1.targetX = tx
+        b1.targetY = ty
+
+        # board上の位置を入れ替える。
+        x1, y1 = self.board.getBlockPos(b1)
+        x2, y2 = self.board.getBlockPos(b2)
+        self.board[y1][x1] = b2
+        self.board[y2][x2] = b1
 
     def draw(self):
         super().draw()
