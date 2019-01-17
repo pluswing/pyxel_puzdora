@@ -3,6 +3,7 @@ from .base import GameSceneBase
 
 
 class ChainScene(GameSceneBase):
+
     def __init__(self, root, board, chains):
         super().__init__(root, board)
         self.chains = chains
@@ -13,7 +14,7 @@ class ChainScene(GameSceneBase):
             if len(self.chains):
                 chain = self.chains.pop(0)
                 for pos in chain:
-                    self.board[pos.y][pos.x].fadeOut()
+                    self.board[pos.y][pos.x].blink()
             else:
                 self.root.nextScene(self)
 
