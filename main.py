@@ -29,6 +29,7 @@ class App:
         self.board = Board(BLOCK_MAX_X, BLOCK_MAX_Y)
         self.scene = MoveBlockScene(self, self.board)
         self.comboCounter = 0
+        self.score = 0
 
         pyxel.load("puzdora.pyxel")
 
@@ -46,10 +47,15 @@ class App:
         pyxel.run(self.update, self.draw)
 
     def update(self):
-        self.scene.update()
+        ret = self.scene.update()
+        if ret:
+            self.score += ret
+            self.comboCounter += 1
 
     def draw(self):
         self.scene.draw()
+        pyxel.text(5, 5,  "SCORE:{}".format(self.score), 7)
+        pyxel.text(5, 15, "COMBO:{}".format(self.comboCounter), 7)
 
     def nextScene(self, scene):
         if isinstance(scene, MoveBlockScene):
@@ -58,7 +64,6 @@ class App:
             if len(scene.chains):
                 self.changeScene(ChainScene(self, self.board,
                                             scene.chains, self.comboCounter))
-                self.comboCounter += len(scene.chains)
             else:
                 self.changeScene(MoveBlockScene(self, self.board))
                 self.comboCounter = 0
