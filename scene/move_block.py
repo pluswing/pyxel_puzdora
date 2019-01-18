@@ -44,6 +44,7 @@ class MoveBlockScene(GameSceneBase):
                                 lr = self.board[dy][dx + (bx - dx)]
                                 self.swap(self.draggingBlock, lr)
                             self.swap(self.draggingBlock, b)
+                            pyxel.play(0, [20])
 
     def swap(self, b1, b2):
         # 見た目上の位置を入れ替える（アニメーション）

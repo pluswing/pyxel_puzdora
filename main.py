@@ -28,20 +28,25 @@ class App:
         Block.BLOCK_SIZE = 33
         self.board = Board(BLOCK_MAX_X, BLOCK_MAX_Y)
         self.scene = MoveBlockScene(self, self.board)
+        self.comboCounter = 0
 
         pyxel.load("puzdora.pyxel")
-        pyxel.sound(0).set("e2e2c2g1 g1g1c2e2 d2d2d2g2 g2g2rr" "c2c2a1e1 e1e1a1c2 b1b1b1e2 e2e2rr",
-                           "p",
-                           "6",
-                           "vffn fnff vffs vfnn",
-                           25,)
+
+        notes = ['C', 'C#', 'D', 'D#', 'E', 'F',
+                 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+        comboNotes = [n + '3' for n in notes[4:]] + \
+            [n + '4' for n in notes]
+
+        for i, note in enumerate(comboNotes):
+            pyxel.sound(i).set(note, "T", "6", "F", 20)
+
+        pyxel.sound(20).set("C2C1", "TT", "2", "VV", 2)
 
         pyxel.run(self.update, self.draw)
 
     def update(self):
         self.scene.update()
-        if pyxel.btnp(pyxel.KEY_1):
-            pyxel.play(0, [0, 1], loop=True)
 
     def draw(self):
         self.scene.draw()
@@ -51,9 +56,12 @@ class App:
             self.changeScene(EvaluateScene(self, self.board))
         elif isinstance(scene, EvaluateScene):
             if len(scene.chains):
-                self.changeScene(ChainScene(self, self.board, scene.chains))
+                self.changeScene(ChainScene(self, self.board,
+                                            scene.chains, self.comboCounter))
+                self.comboCounter += len(scene.chains)
             else:
                 self.changeScene(MoveBlockScene(self, self.board))
+                self.comboCounter = 0
         elif isinstance(scene, ChainScene):
             self.changeScene(WaitAnimation(DropDownScene(self, self.board)))
         elif isinstance(scene, DropDownScene):
