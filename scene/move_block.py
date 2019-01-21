@@ -8,6 +8,7 @@ class MoveBlockScene(GameSceneBase):
         super().__init__(root, board)
         self.blockSize = int(pyxel.width / board.width)
         self.draggingBlock = None
+        self.finish = False
 
     def dragging(self):
         return self.draggingBlock is not None
@@ -22,7 +23,7 @@ class MoveBlockScene(GameSceneBase):
                         self.draggingBlock = b
 
         # ブロックを離す判定
-        if self.dragging() and not pyxel.btn(pyxel.MOUSE_LEFT_BUTTON):
+        if self.dragging() and not pyxel.btn(pyxel.MOUSE_LEFT_BUTTON) or self.finish:
             self.draggingBlock.moveTo(
                 self.draggingBlock.targetX, self.draggingBlock.targetY)
             self.draggingBlock = None
